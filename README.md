@@ -10,3 +10,6 @@ Our dataset contains:
 - Toilet
 - Toilet paper
 
+the model we are trying to make here is:
+- YOLOv3 (filename: experiment_model1.ipynb)
+- CNN (filename: blind_app_model.ipynb)
