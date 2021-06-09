@@ -1,8 +1,10 @@
 package com.example.dampingi
 
 import android.content.pm.PackageManager
+import android.graphics.PorterDuff
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.util.Size
 import android.widget.Toast
@@ -20,6 +22,7 @@ import com.example.dampingi.utils.Constant.REQUEST_CODE_PERMISSIONS
 import com.example.dampingi.utils.Constant.REQUIRED_PERMISSIONS
 import com.example.dampingi.viewmodels.MainActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -27,6 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var cameraExecutor: ExecutorService
+    private lateinit var mTextToSpeech: TextToSpeech
     private lateinit var mainViewModel: MainActivityViewModel
     private lateinit var image: ImageProxy
     private lateinit var oldData: String
@@ -36,14 +40,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         oldData = ""
+        initTTS()
         mainViewModel = ViewModelProvider(this).get(MainActivityViewModel::class.java)
         mainViewModel.onGetData().observe(this, Observer {
             data ->
+            if (data == null){
+                binding.focusRect.setColorFilter(ContextCompat.getColor(this,R.color.design_default_color_error),PorterDuff.Mode.SRC_IN)
+            }
             if (data != null && data.response[0].detections.isNotEmpty()){
                 val predict = data.response.first().detections.first().`class`
                 if(oldData != predict){
-                    oldData = predict
-                    binding.result.text = predict
+                    mTextToSpeech.speak(predict,TextToSpeech.QUEUE_FLUSH,null,null)
+                    binding.focusRect.setColorFilter(ContextCompat.getColor(this,R.color.primaryDarkColor),PorterDuff.Mode.SRC_IN)
                 }
             }
             image.close()
@@ -56,6 +64,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+    }
+
+    private fun initTTS() {
+        mTextToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
+            if (it == TextToSpeech.SUCCESS){
+                mTextToSpeech.language = Locale.ENGLISH
+
+            }
+        })
     }
 
     private fun takePhoto() {}
